@@ -403,6 +403,12 @@ function render() {
   // Dynamic button visibility for global actions
   exportBtn.style.display = (userRole === 'ADMIN') ? 'inline-block' : 'none';
   clearLogsBtn.style.display = (userRole === 'ADMIN') ? 'inline-block' : 'none';
+  
+  // 4. Restricted Audit Log Access (Need-to-know principle)
+  const auditSection = auditLog.closest('.card');
+  if (auditSection) {
+    auditSection.style.display = (userRole === 'ADMIN') ? 'block' : 'none';
+  }
 
   totalOccurrences.textContent = occurrences.length;
   criticalOccurrences.textContent = occurrences.filter((item) => item.priority === "Crítica").length;
