@@ -163,6 +163,23 @@ function writeLog(action, detail, level = "INFO") {
   saveAuditLogs(logs);
 }
 
+/**
+ * Sanitiza strings para evitar ataques XSS
+ * @param {string} str 
+ * @returns {string}
+ */
+function sanitize(str) {
+  if (typeof str !== 'string') return str;
+  const map = {
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#39;'
+  };
+  return str.replace(/[&<>"']/g, function(m) { return map[m]; });
+}
+
 function showLogin() {
   loginView.classList.remove("hidden");
   appView.classList.add("hidden");
@@ -181,7 +198,6 @@ function showApp(user) {
 
   currentUserName.textContent = user.name;
   currentUserDetails.textContent = `${user.email} | Perfil: ${user.role}`;
-  roleSelect.value = user.role;
 
   render();
 }
@@ -191,7 +207,7 @@ function login(email, password) {
 
   if (!user) {
     alert("Usuário ou senha inválidos.");
-    writeLog("LOGIN_FALHOU", `Tentativa para ${email}`);
+    writeLog("LOGIN_FALHOU", `Tentativa para ${email}`, "WARNING");
     return;
   }
 
@@ -207,19 +223,6 @@ function logout() {
   showLogin();
 }
 
-function changeRole(newRole) {
-  const session = getSession();
-
-  if (!session) {
-    return;
-  }
-
-  session.role = newRole;
-  saveSession(session);
-  writeLog("PERFIL_ALTERADO", `Perfil ativo alterado manualmente para ${newRole}.`);
-  showApp(session);
-}
-
 function createOccurrence(event) {
   event.preventDefault();
 
@@ -227,15 +230,15 @@ function createOccurrence(event) {
 
   const occurrence = {
     id: `OC-${Math.floor(Math.random() * 9000) + 1000}`,
-    studentName: document.querySelector("#studentName").value,
-    studentId: document.querySelector("#studentId").value,
-    studentCpf: document.querySelector("#studentCpf").value,
-    studentEmail: document.querySelector("#studentEmail").value,
-    studentPhone: document.querySelector("#studentPhone").value,
-    category: document.querySelector("#category").value,
-    priority: document.querySelector("#priority").value,
-    description: document.querySelector("#description").value,
-    internalNote: document.querySelector("#internalNote").value,
+    studentName: sanitize(document.querySelector("#studentName").value),
+    studentId: sanitize(document.querySelector("#studentId").value),
+    studentCpf: sanitize(document.querySelector("#studentCpf").value),
+    studentEmail: sanitize(document.querySelector("#studentEmail").value),
+    studentPhone: sanitize(document.querySelector("#studentPhone").value),
+    category: sanitize(document.querySelector("#category").value),
+    priority: sanitize(document.querySelector("#priority").value),
+    description: sanitize(document.querySelector("#description").value),
+    internalNote: sanitize(document.querySelector("#internalNote").value),
     privacyAck: document.querySelector("#privacyAck").checked,
     status: "Aberta",
     createdBy: session ? session.email : "desconhecido",
@@ -367,10 +370,11 @@ function render() {
     auditLog.innerHTML = `<div class="notice">Nenhum log registrado.</div>`;
   } else {
     auditLog.innerHTML = logs.map((log) => `
-      <div class="log-item">
-        <strong>${log.when}</strong><br />
-        usuário=${log.user || "—"} | perfil=${log.role || "—"} | ação=${log.action}<br />
-        detalhe=${log.detail}
+      <div class="log-item log-level-${log.level || 'INFO'}">
+        <strong>${log.timestamp}</strong> [${log.level || 'INFO'}]<br />
+        usuário=${log.userId || "—"} | perfil=${log.userRole || "—"} | ip=${log.ipSimulado || "—"}<br />
+        ação=<strong>${log.action}</strong><br />
+        detalhe=${sanitize(log.detail)}
       </div>
     `).join("");
   }
@@ -391,7 +395,6 @@ exportBtn.addEventListener("click", exportEverything);
 clearLogsBtn.addEventListener("click", clearLogs);
 resetBtn.addEventListener("click", resetData);
 searchInput.addEventListener("input", render);
-roleSelect.addEventListener("change", (event) => changeRole(event.target.value));
 
 window.deleteOccurrence = deleteOccurrence;
 window.changeStatus = changeStatus;
