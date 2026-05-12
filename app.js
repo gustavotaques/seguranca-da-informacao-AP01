@@ -388,9 +388,11 @@ function render() {
   // 1. Row-Level Security: Filter occurrences based on user role
   if (userRole === 'ALUNO') {
     occurrences = occurrences.filter((item) => {
-      const isOwnerByEmail = item.studentEmail === session.email;
-      const isOwnerById = item.studentId === session.studentId;
-      return isOwnerByEmail || isOwnerById;
+      // O Aluno só vê o que ele mesmo criou (createdBy) 
+      // OU ocorrências onde ele é o titular dos dados (email ou ID)
+      const wasCreatedByMe = item.createdBy === session.email;
+      const isMyData = item.studentEmail === session.email || item.studentId === session.studentId;
+      return wasCreatedByMe || isMyData;
     });
   }
 
