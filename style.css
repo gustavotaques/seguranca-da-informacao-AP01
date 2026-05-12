@@ -326,6 +326,16 @@ td {
   line-height: 1.45;
 }
 
+.log-level-WARNING {
+  border-left: 6px solid #f59e0b;
+  background-color: #fffbeb;
+}
+
+.log-level-DENIED {
+  border-left: 6px solid var(--danger);
+  background-color: var(--danger-bg);
+}
+
 .hidden {
   display: none !important;
 }
