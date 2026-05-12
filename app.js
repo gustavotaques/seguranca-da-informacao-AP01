@@ -358,6 +358,27 @@ function resetData() {
   boot();
 }
 
+function maskCPF(cpf) {
+  if (!cpf) return "";
+  // Formato esperado: 123.456.789-10 -> ***.***.***-10
+  const digits = cpf.replace(/\D/g, "");
+  if (digits.length !== 11) return cpf; // Retorna original se não for padrão
+
+  return `***.***.***-${digits.slice(-2)}`;
+}
+
+function maskPhone(phone) {
+  if (!phone) return "";
+  // Formato esperado: (47) 99999-1010 -> (47) *****-1010
+  // Ou qualquer formato, vamos tentar manter o DDD e os últimos 4 dígitos
+  const digits = phone.replace(/\D/g, "");
+  if (digits.length < 10) return phone;
+
+  const ddd = digits.slice(0, 2);
+  const last4 = digits.slice(-4);
+  return `(${ddd}) *****-${last4}`;
+}
+
 function render() {
   const term = searchInput.value.toLowerCase();
   const occurrences = getOccurrences();
@@ -381,16 +402,24 @@ function render() {
     const canManageStatus = (userRole === 'ADMIN' || userRole === 'PROFESSOR');
     const canDelete = (userRole === 'ADMIN');
 
+    // 3. Data Masking based on LGPD / Need-to-know
+    // Mask for everyone except the creator or ADMIN
+    const isCreator = session && item.createdBy === session.email;
+    const shouldMask = (userRole !== 'ADMIN' && !isCreator);
+
+    const displayCpf = shouldMask ? maskCPF(item.studentCpf) : item.studentCpf;
+    const displayPhone = shouldMask ? maskPhone(item.studentPhone) : item.studentPhone;
+
     return `
     <tr>
       <td>
         <strong>${item.studentName}</strong><br />
         <span class="muted-text">${item.studentId}</span>
       </td>
-      <td>${item.studentCpf}</td>
+      <td>${displayCpf}</td>
       <td>
         ${item.studentEmail}<br />
-        ${item.studentPhone}
+        ${displayPhone}
       </td>
       <td>${item.category}</td>
       <td><span class="priority ${item.priority}">${item.priority}</span></td>
