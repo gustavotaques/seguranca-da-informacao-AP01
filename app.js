@@ -361,17 +361,27 @@ function resetData() {
 function render() {
   const term = searchInput.value.toLowerCase();
   const occurrences = getOccurrences();
+  const session = getSession();
+  const userRole = session ? session.role : null;
 
   const filtered = occurrences.filter((item) => {
     const content = JSON.stringify(item).toLowerCase();
     return content.includes(term);
   });
 
+  // Dynamic button visibility for global actions
+  exportBtn.style.display = (userRole === 'ADMIN') ? 'inline-block' : 'none';
+  clearLogsBtn.style.display = (userRole === 'ADMIN') ? 'inline-block' : 'none';
+
   totalOccurrences.textContent = occurrences.length;
   criticalOccurrences.textContent = occurrences.filter((item) => item.priority === "Crítica").length;
   lastUpdate.textContent = `Atualizado em ${new Date().toLocaleTimeString("pt-BR")}`;
 
-  occurrencesTable.innerHTML = filtered.map((item) => `
+  occurrencesTable.innerHTML = filtered.map((item) => {
+    const canManageStatus = (userRole === 'ADMIN' || userRole === 'PROFESSOR');
+    const canDelete = (userRole === 'ADMIN');
+
+    return `
     <tr>
       <td>
         <strong>${item.studentName}</strong><br />
@@ -391,13 +401,17 @@ function render() {
       </td>
       <td>
         <div class="row-actions">
-          <button class="btn secondary" onclick="changeStatus('${item.id}', 'Em análise')">Em análise</button>
-          <button class="btn secondary" onclick="changeStatus('${item.id}', 'Resolvida')">Resolver</button>
-          <button class="btn danger" onclick="deleteOccurrence('${item.id}')">Excluir</button>
+          ${canManageStatus ? `
+            <button class="btn secondary" onclick="changeStatus('${item.id}', 'Em análise')">Em análise</button>
+            <button class="btn secondary" onclick="changeStatus('${item.id}', 'Resolvida')">Resolver</button>
+          ` : ''}
+          ${canDelete ? `
+            <button class="btn danger" onclick="deleteOccurrence('${item.id}')">Excluir</button>
+          ` : ''}
         </div>
       </td>
     </tr>
-  `).join("");
+  `}).join("");
 
   const logs = getAuditLogs();
 
