@@ -89,7 +89,6 @@ const exportBtn = document.querySelector("#exportBtn");
 const clearLogsBtn = document.querySelector("#clearLogsBtn");
 const resetBtn = document.querySelector("#resetBtn");
 const searchInput = document.querySelector("#search");
-const roleSelect = document.querySelector("#roleSelect");
 
 const sessionBadge = document.querySelector("#sessionBadge");
 const currentUserName = document.querySelector("#currentUserName");
@@ -106,14 +105,7 @@ function boot() {
   }
 
   if (!localStorage.getItem(STORAGE_KEYS.audit)) {
-    localStorage.setItem(STORAGE_KEYS.audit, JSON.stringify([
-      {
-        when: new Date().toISOString(),
-        user: "sistema",
-        action: "BASE_INICIAL_CRIADA",
-        detail: "Dados fictícios carregados no localStorage."
-      }
-    ]));
+    writeLog("BASE_INICIAL_CRIADA", "Dados fictícios carregados no localStorage.");
   }
 
   const session = getSession();
