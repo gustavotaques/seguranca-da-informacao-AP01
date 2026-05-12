@@ -141,17 +141,24 @@ function saveSession(user) {
   localStorage.setItem(STORAGE_KEYS.session, JSON.stringify(user));
 }
 
-function writeLog(action, detail) {
+function writeLog(action, detail, level = "INFO") {
   const session = getSession();
   const logs = getAuditLogs();
 
   logs.unshift({
-    when: new Date().toISOString(),
-    user: session ? session.email : "anonimo",
-    role: session ? session.role : "SEM_SESSAO",
+    timestamp: new Date().toISOString(),
+    userId: session ? (session.email) : "anonimo",
+    userRole: session ? session.role : "SEM_SESSAO",
+    ipSimulado: "127.0.0.1",
+    level: level,
     action,
     detail
   });
+
+  // Mantém apenas os últimos 100 logs para não estourar o localStorage
+  if (logs.length > 100) {
+    logs.splice(100);
+  }
 
   saveAuditLogs(logs);
 }
