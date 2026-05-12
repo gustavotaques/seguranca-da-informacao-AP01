@@ -223,6 +223,33 @@ function logout() {
   showLogin();
 }
 
+function checkPermission(requiredRole) {
+  const session = getSession();
+
+  if (!session) {
+    writeLog("ACESSO_NEGADO", `Tentativa de realizar ação que requer ${requiredRole} sem sessão.`, "DENIED");
+    alert("Você precisa estar logado para realizar esta ação.");
+    return false;
+  }
+
+  const roleHierarchy = {
+    'ALUNO': 1,
+    'PROFESSOR': 2,
+    'ADMIN': 3
+  };
+
+  const userRoleLevel = roleHierarchy[session.role] || 0;
+  const requiredRoleLevel = roleHierarchy[requiredRole] || 0;
+
+  if (userRoleLevel < requiredRoleLevel) {
+    writeLog("ACESSO_NEGADO", `Usuário ${session.email} tentou ação que requer ${requiredRole}.`, "DENIED");
+    alert("Acesso negado. Você não tem permissão para realizar esta ação.");
+    return false;
+  }
+
+  return true;
+}
+
 function createOccurrence(event) {
   event.preventDefault();
 
@@ -259,6 +286,8 @@ function createOccurrence(event) {
 }
 
 function deleteOccurrence(id) {
+  if (!checkPermission('ADMIN')) return;
+
   const occurrences = getOccurrences();
   const occurrence = occurrences.find((item) => item.id === id);
   const updated = occurrences.filter((item) => item.id !== id);
@@ -269,6 +298,8 @@ function deleteOccurrence(id) {
 }
 
 function changeStatus(id, status) {
+  if (!checkPermission('PROFESSOR')) return;
+
   const occurrences = getOccurrences();
   const occurrence = occurrences.find((item) => item.id === id);
 
@@ -285,6 +316,8 @@ function changeStatus(id, status) {
 }
 
 function exportEverything() {
+  if (!checkPermission('ADMIN')) return;
+
   const payload = {
     exportedAt: new Date().toISOString(),
     exportedBy: getSession(),
@@ -312,6 +345,8 @@ function exportEverything() {
 }
 
 function clearLogs() {
+  if (!checkPermission('ADMIN')) return;
+
   saveAuditLogs([]);
   render();
 }
