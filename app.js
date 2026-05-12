@@ -381,10 +381,20 @@ function maskPhone(phone) {
 
 function render() {
   const term = searchInput.value.toLowerCase();
-  const occurrences = getOccurrences();
+  let occurrences = getOccurrences();
   const session = getSession();
   const userRole = session ? session.role : null;
 
+  // 1. Row-Level Security: Filter occurrences based on user role
+  if (userRole === 'ALUNO') {
+    occurrences = occurrences.filter((item) => {
+      const isOwnerByEmail = item.studentEmail === session.email;
+      const isOwnerById = item.studentId === session.studentId;
+      return isOwnerByEmail || isOwnerById;
+    });
+  }
+
+  // 2. Text Search Filter
   const filtered = occurrences.filter((item) => {
     const content = JSON.stringify(item).toLowerCase();
     return content.includes(term);
